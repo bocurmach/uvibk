@@ -34,22 +34,26 @@ def get_data_from_api():
     return max_expected, measurements, time_stamps
 
 
-def send_to_bot(msg: str, cur_index: float, last_msg: str):
+def send_to_bot(msg: str, cur_index: float, last_warning_msg: str):
 
-    msg += '\n' + uv_warning_message(cur_index)
+    warning_msg = uv_warning_message(cur_index)
+
+    if warning_msg == last_warning_msg:
+        return last_warning_msg
+
+    msg += '\n' + warning_msg
     msg += f'\nInformation taken from:\n{WEB_URL_IBK}'
     print(TELEGRAM_TOKEN)
     bot = telebot.TeleBot(token=TELEGRAM_TOKEN)
     print(bot.get_me())
     cur_img = web_img.get_current_image()
 
-    if msg != last_msg:
-        if cur_img is not None:
-            logging.info(cur_img)
-            bot.send_photo(chat_id=CHANNEL_NAME, photo=cur_img, caption=msg)
-        else:
-            bot.send_message(chat_id=CHANNEL_NAME, text=msg)
-    return msg
+    if cur_img is not None:
+        logging.info(cur_img)
+        bot.send_photo(chat_id=CHANNEL_NAME, photo=cur_img, caption=msg)
+    else:
+        bot.send_message(chat_id=CHANNEL_NAME, text=msg)
+    return warning_msg
 
 
 def uv_warning_message(cur_index):
@@ -69,30 +73,32 @@ def uv_warning_message(cur_index):
     return warning_message
 
 
-def update_message(last_msg: str):
+def update_message(last_warning_msg: str):
     max_expected, measurements, time_stamps = get_data_from_api()
     info_str = ''
     cur_index = -1
 
-    for measurement, time_stamp in zip(measurements, time_stamps):
-        relative_to_max = measurement/max_expected
+#    for measurement, time_stamp in zip(measurements, time_stamps):
+    measurement = measurements[-1]
+    time_stamp = time_stamps[-1]
+    relative_to_max = measurement/max_expected
 
-        info_str = f'{time_stamp}: {measurement:.2f} of max {
-            max_expected} ({relative_to_max*100:.0f}%)'
+    info_str = f'{time_stamp}: {measurement:.2f} of max ' + \
+        f'{max_expected} ({relative_to_max*100:.0f}%)'
 
-        logging.info(info_str)
+    logging.info(info_str)
 
-    return send_to_bot(info_str, cur_index, last_msg)
+    return send_to_bot(info_str, cur_index, last_warning_msg)
 
 
 def main():
-    msg = update_message('')
+    warning_msg = update_message('')
 
     while True:
         if datetime.now().minute % 1 == 0:
             if datetime.now().second <= 5:
                 time.sleep(6)
-                msg = update_message(msg)
+                warning_msg = update_message(warning_msg)
                 time.sleep(50)
         else:
             time.sleep(1)
