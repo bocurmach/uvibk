@@ -3,9 +3,10 @@ import json
 from datetime import datetime, timedelta
 import telebot
 import time
-import web_img
+import create_graphic
 from helper import API_URL_IBK, WEB_URL_IBK, TELEGRAM_TOKEN, CHANNEL_NAME
 import logging
+from urllib3.exceptions import MaxRetryError
 
 
 def convert_time_stamps(time_stamps: list[str]):
@@ -17,24 +18,37 @@ def convert_time_stamps(time_stamps: list[str]):
 
 
 def get_data_from_api():
-    r = requests.get(API_URL_IBK)
+    retry_count = 0
+    while True:
+        try:
+            time.sleep(retry_count**2)
+            retry_count += 1
+
+            r = requests.get(API_URL_IBK)
+        except MaxRetryError as err:
+            print('MaxRetryError', err)
+        except Exception as err:
+            print(err)
+        else:
+            break
 
     content = json.loads(r.content.decode('utf-8'))
 
     uve = content['Innsbruck']['uve']
 
-    max_expected = uve['max_expected_value']
     measurements = uve['measurement']
-    time_stamps = uve['ts']
-#    unit = uve['unit']
-#    url_highres = uve['url_higres']
+    time_stamps = convert_time_stamps(uve['ts'])
 
-    time_stamps = convert_time_stamps(time_stamps)
+    print(datetime.now(), time_stamps[-1], measurements[-1])
 
-    return max_expected, measurements, time_stamps
+    return measurements, time_stamps
 
 
-def send_to_bot(msg: str, cur_index: float, last_warning_msg: str):
+def send_to_bot(msg: str,
+                cur_index: float,
+                last_warning_msg: str,
+                measurements: list[float],
+                time_stamps: list[datetime]):
 
     warning_msg = uv_warning_message(cur_index)
 
@@ -43,10 +57,9 @@ def send_to_bot(msg: str, cur_index: float, last_warning_msg: str):
 
     msg += '\n' + warning_msg
     msg += f'\nInformation taken from:\n{WEB_URL_IBK}'
-    print(TELEGRAM_TOKEN)
     bot = telebot.TeleBot(token=TELEGRAM_TOKEN)
-    print(bot.get_me())
-    cur_img = web_img.get_current_image()
+
+    cur_img = create_graphic.create_image(measurements, time_stamps)
 
     if cur_img is not None:
         logging.info(cur_img)
@@ -62,7 +75,7 @@ def uv_warning_message(cur_index):
     if cur_index < 3:
         warning_message = 'uv currently not dangerous'
     elif cur_index < 6:
-        warning_message = 'moderate uv, better get sunscreen'
+        warning_message = 'moderate uv, sunscreen appropriate'
     elif cur_index < 8:
         warning_message = 'high uv, try to stay in the shadows and better GET SUNSCREEN'
     elif cur_index < 10:
@@ -74,38 +87,37 @@ def uv_warning_message(cur_index):
 
 
 def update_message(last_warning_msg: str):
-    max_expected, measurements, time_stamps = get_data_from_api()
+    measurements, time_stamps = get_data_from_api()
     info_str = ''
-    cur_index = -1
 
-#    for measurement, time_stamp in zip(measurements, time_stamps):
     measurement = measurements[-1]
     time_stamp = time_stamps[-1]
-    relative_to_max = measurement/max_expected
 
-    info_str = f'{time_stamp}: {measurement:.2f} of max ' + \
-        f'{max_expected} ({relative_to_max*100:.0f}%)'
+    info_str = f'{time_stamp}: {measurement:.2f} '
 
     logging.info(info_str)
 
-    return send_to_bot(info_str, cur_index, last_warning_msg)
+    return send_to_bot(info_str, measurement, last_warning_msg, measurements, time_stamps)
 
 
 def main():
-    warning_msg = update_message('')
+    warning_msg = ""
+
+    check_every_x_mins = 6
 
     while True:
-        if datetime.now().minute % 1 == 0:
+        if datetime.now().hour >= 20:
+            print('good night')
+            hours_until_8 = 24 + 8 - datetime.now().hour
+            time.sleep(60*60*hours_until_8)
+
+        if datetime.now().minute % check_every_x_mins == 0:
             if datetime.now().second <= 5:
                 time.sleep(6)
                 warning_msg = update_message(warning_msg)
-                time.sleep(50)
+                time.sleep(check_every_x_mins*60-10)
         else:
-            time.sleep(1)
-
-        if datetime.now().hour >= 20:
-            logging.info('good night')
-            time.sleep(60*60*10)
+            time.sleep(60)
 
 
 if __name__ == '__main__':
