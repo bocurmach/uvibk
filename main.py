@@ -51,6 +51,7 @@ def send_to_bot(msg: str,
                 time_stamps: list[datetime]):
 
     warning_msg = uv_warning_message(cur_index)
+    print(warning_msg)
 
     if warning_msg == last_warning_msg:
         return last_warning_msg

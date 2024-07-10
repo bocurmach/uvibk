@@ -1,5 +1,4 @@
 requests
 telebot
+matplotlib
 
-selenium
-webdriver-manager
