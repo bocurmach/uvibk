@@ -66,7 +66,7 @@ def update_message(last_warning_msg: str):
 
         return send_to_bot(info_str, measurement, last_warning_msg, measurements, time_stamps)
     else:
-        return ''
+        return last_warning_msg
 
 
 def main():
