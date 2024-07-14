@@ -1,47 +1,11 @@
-import requests
-import json
-from datetime import datetime, timedelta
+from datetime import datetime
 import telebot
 import time
-import create_graphic
-from helper import API_URL_IBK, WEB_URL_IBK, TELEGRAM_TOKEN, CHANNEL_NAME
+from create_graphic import create_image, IMG_PATH
+from helper import WEB_URL_IBK, TELEGRAM_TOKEN, CHANNEL_NAME
 import logging
-from urllib3.exceptions import MaxRetryError
-
-
-def convert_time_stamps(time_stamps: list[str]):
-    for i in range(len(time_stamps)):
-        time_stamps[i] = datetime.strptime(
-            time_stamps[i], '%Y-%m-%dT%H:%M:%S+0000') + timedelta(hours=2)
-
-    return time_stamps
-
-
-def get_data_from_api():
-    retry_count = 0
-    while True:
-        try:
-            time.sleep(retry_count**2)
-            retry_count += 1
-
-            r = requests.get(API_URL_IBK)
-        except MaxRetryError as err:
-            print('MaxRetryError', err)
-        except Exception as err:
-            print(err)
-        else:
-            break
-
-    content = json.loads(r.content.decode('utf-8'))
-
-    uve = content['Innsbruck']['uve']
-
-    measurements = uve['measurement']
-    time_stamps = convert_time_stamps(uve['ts'])
-
-    print(datetime.now(), time_stamps[-1], measurements[-1])
-
-    return measurements, time_stamps
+from uibkapi import get_data_from_api
+import os.path
 
 
 def send_to_bot(msg: str,
@@ -60,9 +24,9 @@ def send_to_bot(msg: str,
     msg += f'\nInformation taken from:\n{WEB_URL_IBK}'
     bot = telebot.TeleBot(token=TELEGRAM_TOKEN)
 
-    cur_img = create_graphic.create_image(measurements, time_stamps)
+    create_image(measurements, time_stamps)
 
-    if cur_img is not None:
+    if os.path.exists(IMG_PATH):
         logging.info(cur_img)
         bot.send_photo(chat_id=CHANNEL_NAME, photo=cur_img, caption=msg)
     else:
@@ -103,6 +67,8 @@ def update_message(last_warning_msg: str):
 
 def main():
     warning_msg = ""
+
+    warning_msg = update_message(warning_msg)
 
     check_every_x_mins = 6
 
