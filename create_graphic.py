@@ -108,8 +108,6 @@ def create_image(data_measurements: list[float], data_timestamps: list[datetime]
     gauss_hours = np.linspace(start=hours[0], stop=hours[-1], num=len(hours)*4)
     gaussian = create_gauss(gauss_hours)
 
-    print(*hours, sep='\n')
-
     fig, ax = plt.subplots(figsize=(6,3), dpi=300)
 
     ax.fill_between(x=gauss_hours, y1=gaussian, color='#DDDDDD', zorder=0)
@@ -120,7 +118,6 @@ def create_image(data_measurements: list[float], data_timestamps: list[datetime]
 
     max_yval = max(*measurements, *gaussian)
     plt.yticks([y for y in range(0, int(max_yval)+2)])
-    print(hours)
 
     plt.xticks([x for x in range(int(TIME_START), int(TIME_STOP)+1)])
     ax.set_xlim(left=hours[0]-0.25, right=hours[-1]+0.25)
@@ -133,9 +130,6 @@ def create_image(data_measurements: list[float], data_timestamps: list[datetime]
     #plt.tight_layout()
 
     plt.savefig(IMG_PATH, pad_inches=0.1, bbox_inches='tight')
-    print('done')
-
-
 
 
 def test(x: int):
