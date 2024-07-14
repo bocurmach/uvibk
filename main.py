@@ -26,8 +26,7 @@ def send_to_bot(msg: str,
     create_image(measurements, time_stamps)
 
     if os.path.exists(IMG_PATH):
-        logging.info(cur_img)
-        bot.send_photo(chat_id=CHANNEL_NAME, photo=cur_img, caption=msg)
+        bot.send_photo(chat_id=CHANNEL_NAME, photo=IMG_PATH, caption=msg)
     else:
         bot.send_message(chat_id=CHANNEL_NAME, text=msg)
     return warning_msg
