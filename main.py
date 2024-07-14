@@ -7,7 +7,6 @@ import logging
 from uibkapi import get_data_from_api
 import os.path
 
-
 def send_to_bot(msg: str,
                 cur_index: float,
                 last_warning_msg: str,
@@ -37,6 +36,8 @@ def send_to_bot(msg: str,
 def uv_warning_message(cur_index):
     warning_message: str
 
+    cur_index = round(cur_index, 1)
+
     if cur_index < 3:
         warning_message = 'uv currently not dangerous'
     elif cur_index < 6:
@@ -55,14 +56,17 @@ def update_message(last_warning_msg: str):
     measurements, time_stamps = get_data_from_api()
     info_str = ''
 
-    measurement = measurements[-1]
-    time_stamp = time_stamps[-1]
+    if len(measurements) > 0 and len(time_stamps) > 0:
+        measurement = measurements[-1]
+        time_stamp = time_stamps[-1]
 
-    info_str = f'{time_stamp}: {measurement:.2f} '
+        info_str = f'{time_stamp}: {measurement:.2f} '
 
-    logging.info(info_str)
+        logging.info(info_str)
 
-    return send_to_bot(info_str, measurement, last_warning_msg, measurements, time_stamps)
+        return send_to_bot(info_str, measurement, last_warning_msg, measurements, time_stamps)
+    else:
+        return ''
 
 
 def main():

@@ -31,11 +31,15 @@ def get_data_from_api():
 
     content = json.loads(r.content.decode('utf-8'))
 
-    uve = content['Innsbruck']['uve']
+    try:
+        uve = content['Innsbruck']['uve']
 
-    measurements = uve['measurement']
+        measurements = uve['measurement']
 
-    time_stamps = convert_time_stamps(uve['ts'])
+        time_stamps = convert_time_stamps(uve['ts'])
+    except:
+        measurements = []
+        time_stamps = []
 
     return measurements, time_stamps
 
