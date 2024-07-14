@@ -7,6 +7,8 @@ import logging
 from uibkapi import get_data_from_api
 import os.path
 
+STARTING_HOUR = 7
+
 def send_to_bot(msg: str,
                 cur_index: float,
                 last_warning_msg: str,
@@ -77,9 +79,15 @@ def main():
 
     while True:
         if datetime.now().hour >= 20:
-            print('good night')
-            hours_until_8 = 24 + 8 - datetime.now().hour
-            time.sleep(60*60*hours_until_8)
+            hours_until_start = 24 + STARTING_HOUR - datetime.now().hour
+
+            print(f'good night, see you in {hours_until_start} hours')
+            time.sleep(60*60*hours_until_start)
+        elif datetime.now().hour <= STARTING_HOUR:
+            hours_until_start = STARTING_HOUR - datetime.now().hour
+
+            print(f'good night, see you in {hours_until_start} hours')
+            time.sleep(60*60*hours_until_start)
 
         if datetime.now().minute % check_every_x_mins == 0:
             if datetime.now().second <= 5:

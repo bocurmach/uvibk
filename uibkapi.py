@@ -21,6 +21,7 @@ def get_data_from_api():
             time.sleep(retry_count**2)
             retry_count += 1
 
+            print(datetime.now(), 'send request to', API_URL_IBK)
             r = requests.get(API_URL_IBK)
         except MaxRetryError as err:
             print('MaxRetryError', err)
@@ -29,9 +30,8 @@ def get_data_from_api():
         else:
             break
 
-    content = json.loads(r.content.decode('utf-8'))
-
     try:
+        content = json.loads(r.content.decode('utf-8'))
         uve = content['Innsbruck']['uve']
 
         measurements = uve['measurement']
