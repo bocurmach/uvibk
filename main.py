@@ -22,7 +22,6 @@ def send_to_bot(msg: str,
         return last_warning_msg
 
     msg += '\n' + warning_msg
-    msg += f'\nInformation taken from:\n{WEB_URL_IBK}'
     bot = telebot.TeleBot(token=TELEGRAM_TOKEN)
 
     create_image(measurements, time_stamps)
@@ -40,15 +39,15 @@ def uv_warning_message(cur_index):
     cur_index = round(cur_index, 1)
 
     if cur_index < 3:
-        warning_message = 'uv currently not dangerous'
+        warning_message = 'LOW: If you burn easy, cover up and use sunscreen.'
     elif cur_index < 6:
-        warning_message = 'moderate uv, sunscreen appropriate'
+        warning_message = 'MODERATE: Cover up and use sunscreen if you are outside.'
     elif cur_index < 8:
-        warning_message = 'high uv, try to stay in the shadows and better GET SUNSCREEN'
+        warning_message = 'HIGH: Protection is needed! Cover up and use sunscreen. Reduce time outside.'
     elif cur_index < 10:
-        warning_message = 'very high uv, stay in the shadows!'
+        warning_message = 'VERY HIGH: Be extra careful! Unprotected skin will be damaged and can burn quickly.'
     else:
-        warning_message = 'EXTREME uv, stay indoors!'
+        warning_message = 'EXTREME: Unprotected skin can burn in minutes. Avoid the sun, seek shade, wear a hat and sunglasses and use sunscreen.'
 
     return warning_message
 
