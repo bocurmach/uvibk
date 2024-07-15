@@ -27,10 +27,27 @@ TIME_MEAS_NUM = int((TIME_STOP - TIME_START)/TIME_STEP)
 IMG_PATH = './plot.png'
 
 
+hline_values = [3, 6, 8, 10]
+
+annotations = {
+    'LOW': ((6, 1.25), 2),
+    'MODERATE': ((6, 4.25), 4),
+    'HIGH': ((6, 6.75), 7),
+    'VERY HIGH': ((6, 8.75), 9),
+    'EXTREME': ((6, 11), 11)
+}
+
+gauss_max_values = {
+    7: 9,
+    8: 8.5
+}
+
+
 def create_gauss(hours: List[float]):
     mu = 13.35
     sigma = 2.59
-    gauss_max = 8.9
+
+    gauss_max = gauss_max_values[datetime.now().month]
 
     gaussian: np.ndarray = np.array([])
 
@@ -57,6 +74,7 @@ def fix_measurements(measurements):
 
     return fixed_measurements
 
+
 def make_hours(timestamps: List[datetime]):
     hours: List[float] = list()
 
@@ -75,13 +93,14 @@ def prepare_data(data_measurements: List[float],
     prep_hours: List[float] = make_default_hours()
 
     for i in range(len(prep_hours)):
-       cur_hour = prep_hours[i]
 
-       try:
-           data_pos = data_hours.index(cur_hour)
-           prep_measurements[i] = data_measurements[data_pos]
-       except ValueError as err:
-           prep_measurements[i] = 0
+        cur_hour = prep_hours[i]
+
+        try:
+            data_pos = data_hours.index(cur_hour)
+            prep_measurements[i] = data_measurements[data_pos]
+        except ValueError as err:
+            prep_measurements[i] = 0
 
     return prep_measurements, prep_hours
 
@@ -108,11 +127,20 @@ def create_image(data_measurements: list[float], data_timestamps: list[datetime]
     gauss_hours = np.linspace(start=hours[0], stop=hours[-1], num=len(hours)*4)
     gaussian = create_gauss(gauss_hours)
 
-    fig, ax = plt.subplots(figsize=(6,3), dpi=300)
+    fig, ax = plt.subplots(figsize=(6, 3), dpi=300)
 
     ax.fill_between(x=gauss_hours, y1=gaussian, color='#DDDDDD', zorder=0)
     ax.plot(gauss_hours, gaussian, color='#AAAAAA', zorder=1)
-    ax.bar(hours, measurements, color=make_colorlist(measurements), width=0.45, zorder=2)
+    ax.bar(hours, measurements, color=make_colorlist(
+        measurements), width=0.45, zorder=2)
+
+    for hline_val in hline_values:
+        ax.axhline(hline_val, color=palette[hline_val])
+
+    for annotation, ann_info in annotations.items():
+        xy = ann_info[0]
+        color = palette[ann_info[1]]
+        plt.annotate(annotation, xy, color=color)
 
     plt.suptitle(f"Innsbruck {datetime.now().strftime('%d.%m.%Y')}")
 
@@ -127,7 +155,7 @@ def create_image(data_measurements: list[float], data_timestamps: list[datetime]
     plt.xlabel('Time')
     plt.ylabel('UV-Index')
 
-    #plt.tight_layout()
+    # plt.tight_layout()
 
     plt.savefig(IMG_PATH, pad_inches=0.1, bbox_inches='tight')
 
