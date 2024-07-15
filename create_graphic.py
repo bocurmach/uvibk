@@ -127,7 +127,7 @@ def create_image(data_measurements: list[float], data_timestamps: list[datetime]
     gauss_hours = np.linspace(start=hours[0], stop=hours[-1], num=len(hours)*4)
     gaussian = create_gauss(gauss_hours)
 
-    fig, ax = plt.subplots(figsize=(6, 3), dpi=300)
+    fig, ax = plt.subplots(figsize=(6, 3), dpi=250)
 
     ax.fill_between(x=gauss_hours, y1=gaussian, color='#DDDDDD', zorder=0)
     ax.plot(gauss_hours, gaussian, color='#AAAAAA', zorder=1)
@@ -152,7 +152,7 @@ def create_image(data_measurements: list[float], data_timestamps: list[datetime]
 
     plt.grid(alpha=0.3)
 
-    plt.xlabel('Time')
+    plt.xlabel('Hour')
     plt.ylabel('UV-Index')
 
     # plt.tight_layout()
