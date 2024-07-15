@@ -83,7 +83,7 @@ def main():
 
             print(f'good night, see you in {hours_until_start} hours')
             time.sleep(60*60*hours_until_start)
-        elif datetime.now().hour <= STARTING_HOUR:
+        elif datetime.now().hour < STARTING_HOUR:
             hours_until_start = STARTING_HOUR - datetime.now().hour
 
             print(f'good night, see you in {hours_until_start} hours')
