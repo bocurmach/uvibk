@@ -2,7 +2,7 @@ from datetime import datetime
 import telebot
 import time
 from create_graphic import create_image, IMG_PATH
-from helper import WEB_URL_IBK, TELEGRAM_TOKEN, CHANNEL_NAME
+from helper import TELEGRAM_TOKEN, CHANNEL_NAME, WEB_URL_IBK
 import logging
 from uibkapi import get_data_from_api
 import os.path
@@ -22,6 +22,7 @@ def send_to_bot(msg: str,
         return last_warning_msg
 
     msg += '\n' + warning_msg
+    msg += '\n' + WEB_URL_IBK
     bot = telebot.TeleBot(token=TELEGRAM_TOKEN)
 
     create_image(measurements, time_stamps)
