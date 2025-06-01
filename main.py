@@ -1,19 +1,22 @@
 from datetime import datetime
 import telebot
 import time
+import requests
 from create_graphic import create_image, IMG_PATH
-from helper import TELEGRAM_TOKEN, CHANNEL_NAME, WEB_URL_IBK
+from helper import TELEGRAM_TOKEN, CHANNEL_NAME, NTFY_TOPIC, WEB_URL_IBK, NFTY_IMG
 import logging
 from uibkapi import get_data_from_api
 import os.path
+from pprint import pprint
 
 STARTING_HOUR = 7
 
-def send_to_bot(msg: str,
-                cur_index: float,
-                last_warning_msg: str,
-                measurements: list[float],
-                time_stamps: list[datetime]):
+
+def send_out(msg: str,
+             cur_index: float,
+             last_warning_msg: str,
+             measurements: list[float],
+             time_stamps: list[datetime]):
 
     warning_msg = uv_warning_message(cur_index)
     print(warning_msg)
@@ -21,17 +24,48 @@ def send_to_bot(msg: str,
     if warning_msg == last_warning_msg:
         return last_warning_msg
 
-    msg += '\n' + warning_msg
-    msg += '\n' + WEB_URL_IBK
-    bot = telebot.TeleBot(token=TELEGRAM_TOKEN)
-
     create_image(measurements, time_stamps)
 
+    send_via_telegram_bot(msg, warning_msg)
+    # send_via_ntfy(msg, warning_msg)
+
+    return warning_msg
+
+
+def send_via_telegram_bot(msg: str, warning_msg: str):
+    bot = telebot.TeleBot(token=TELEGRAM_TOKEN)
+
+    msg += '\n' + warning_msg
+    msg += '\n' + WEB_URL_IBK
+
     if os.path.exists(IMG_PATH):
-        bot.send_photo(chat_id=CHANNEL_NAME, photo=open(IMG_PATH,'rb'), caption=msg)
+        bot.send_photo(chat_id=CHANNEL_NAME, photo=open(IMG_PATH, 'rb'), caption=msg)
     else:
         bot.send_message(chat_id=CHANNEL_NAME, text=msg)
-    return warning_msg
+
+
+def send_via_ntfy(msg: str, warning_msg: str):
+    print(open(IMG_PATH, 'rb'))
+
+    response = requests.put(NFTY_IMG,
+                            data=open(IMG_PATH, 'rb'),
+                            headers={'Filename': IMG_PATH}
+                            )
+    pprint(response.__dict__)
+    headers = {
+        # "Click": WEB_URL_IBK,
+        'Title': warning_msg,
+        }
+
+    if response.status_code == 200:
+        attach_path = response.json()
+        attach_path = attach_path['attachment']['url']
+        headers['Attach'] = attach_path
+
+    response = requests.post(NTFY_TOPIC,
+                             data=msg,
+                             headers=headers
+                             )
 
 
 def uv_warning_message(cur_index):
@@ -65,7 +99,7 @@ def update_message(last_warning_msg: str):
 
         logging.info(info_str)
 
-        return send_to_bot(info_str, measurement, last_warning_msg, measurements, time_stamps)
+        return send_out(info_str, measurement, last_warning_msg, measurements, time_stamps)
     else:
         return last_warning_msg
 

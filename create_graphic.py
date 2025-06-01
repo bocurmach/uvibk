@@ -24,7 +24,7 @@ TIME_STOP = 21
 TIME_STEP = 0.5
 TIME_MEAS_NUM = int((TIME_STOP - TIME_START)/TIME_STEP)
 
-IMG_PATH = './plot.png'
+IMG_PATH = 'plot.png'
 
 
 hline_values = [3, 6, 8, 10]
